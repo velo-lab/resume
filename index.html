@@ -258,11 +258,12 @@
   <a href="#floor-1" class="floornav-dot" data-label="求职意向"></a>
   <a href="#floor-2" class="floornav-dot" data-label="在做 · 做过"></a>
   <a href="#floor-3" class="floornav-dot" data-label="论文流水线"></a>
-  <a href="#floor-4" class="floornav-dot" data-label="可复用系统"></a>
+  <a href="#floor-4" class="floornav-dot" data-label="小红书流水线"></a>
   <a href="#floor-5" class="floornav-dot" data-label="AI 漫剧"></a>
-  <a href="#floor-6" class="floornav-dot" data-label="以前创业"></a>
-  <a href="#floor-7" class="floornav-dot" data-label="常用工具"></a>
-  <a href="#floor-8" class="floornav-dot" data-label="联系方式"></a>
+  <a href="#floor-6" class="floornav-dot" data-label="小程序"></a>
+  <a href="#floor-7" class="floornav-dot" data-label="以前创业"></a>
+  <a href="#floor-8" class="floornav-dot" data-label="常用工具"></a>
+  <a href="#floor-9" class="floornav-dot" data-label="联系方式"></a>
 </nav>
 
 <div class="house">
@@ -272,7 +273,7 @@
       <div class="sig-text" id="sig">王维露</div>
       <div class="hero-role mono">应聘 FDE</div>
     </div>
-    <p class="hero-tagline">目前是自由职业者，养了两只猫。已完成的项目包括 AI 论文流水线、可复用系统架构、接单管理后台，均为本人独立开发与运营。往下翻，点开都能看。</p>
+    <p class="hero-tagline">目前是自由职业者，养了两只猫。已完成的项目包括 AI 论文流水线、小红书 AI 流水线、微信小程序「每日一杯」，以及自建的接单管理后台，均为本人独立开发与运营。往下翻，点开都能看。</p>
     <div class="hero-contact">
       <button class="btn" data-copy="18500477580"><span class="default">📞 <b>185 0047 7580</b></span><span class="copied">✓ 已复制</span></button>
       <button class="btn" data-copy="velowong0@gmail.com"><span class="default">✉️ <b>velowong0@gmail.com</b></span><span class="copied">✓ 已复制</span></button>
@@ -302,7 +303,8 @@
     <div class="skillgroup-label" style="margin-top:22px;">过往做过的事</div>
     <ul class="marks">
       <li><span class="num">论文流水线搭建</span><span class="d">将一篇论文拆解为三个固定流程（选题、开题、正文），用 AI 搭建全自动流水线并跑通交付</span></li>
-      <li><span class="num">跨平台可复用体系</span><span class="d">基于 Codex + 常用组件，搭建可复用的系统框架</span></li>
+      <li><span class="num">小红书 AI 流水线（三段式）</span><span class="d">把「找需求 → 做产品 → 生成内容」整条链路拆成三段物理隔离的子系统，用安卓自动化、OCR、Playwright、SQLite 串起来，跑通一次真实端到端运行</span></li>
+      <li><span class="num">AI 编程做完整微信小程序</span><span class="d">用 AI Coding 按关卡制流程，从需求验证、竞品分析、PRD 到开发出可运行 MVP（奶茶日记「每日一杯」），独立跑通全流程</span></li>
       <li><span class="num">AI 漫剧 MVP 跑通</span><span class="d">完成对标拆解、剧本统筹、分镜到分幕剪辑的第一版 MVP 闭环</span></li>
       <li><span class="num">四年自主创业</span><span class="d">独立完成一款 App 从 0 到上架全流程；担任过产品经理与活动讲师</span></li>
       <li><span class="num">自建接单与线索管理平台</span><span class="d">打通闲鱼 / 小红书获客成单后的自动化流程，线索自动录入后台，从获客到订单管理一体化</span></li>
@@ -343,11 +345,19 @@
 
   <div class="floor-row right"><section class="floor reveal" id="floor-4">
     <div class="tag"><span class="dot"></span>项目 02</div>
-    <h2>可复用系统 + 小红书运营</h2>
+    <h2>小红书 AI 流水线</h2>
     <div class="stage-sub">2026 至今</div>
-    <p class="soft">基于 Codex + 常用组件搭建的可复用系统框架：对标拆解、选题池、写作模板、提示词库分类沉淀，同一套资产在小红书、公众号复用，论文选题也能改造套用。</p>
-    <p class="soft">小红书运营完整闭环：定位目标 → 拆解对标账号 → 拆解内容 → 沉淀选题池 → 写初稿 → 终稿 → 发布后复盘 → 回调流程。</p>
-    <p class="soft">2026 年 8 月起跟生态同步推进，目前处于持续迭代更新中，数据仍在优化中。</p>
+    <p class="soft">把「找需求 → 做产品 → 生成内容」整条链路拆成三段<b>物理隔离</b>的子系统，每段职责清晰、不跨界写数据：</p>
+    <div class="chipflow">
+      <div class="step"><div class="n">找需求 · A1–A8</div><p>千帆平台榜单采集 → 账号打分筛选 → 安卓真机 + ADB + OCR 抓店铺商品分享短链 → Playwright 归档 → 产出「带证据的需求卡」</p></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">机会转产品 · B1–B4</div><p>机会准入、原创产品设计、事实核验、与生成侧交接同步</p></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">内容生成 · 9 环节</div><p>产品资料整理 → 关键词 → 对标采集 → 拆解 → 模板 → 待审内容包</p></div>
+    </div>
+    <p class="soft">技术：bash 脚本 + SQLite + 安卓自动化（ADB / RapidOCR）+ Playwright 持久化登录 + Obsidian。</p>
+    <div class="stamp">系统设计原则：竞品数据只用于理解人群、绝不写成自己的产品事实；AI 草稿在人工确认前状态必须停在「待审」；数据不够就停下报告、不凑数；发布是人的动作，流水线永远停在「待审 / 已通过」。</div>
+    <p class="soft" style="margin-top:16px;">基于一次真实端到端运行整理了一份分环节操作手册，可作培训讲义。</p>
   </section></div>
 
   <div class="floor-row left"><section class="floor reveal" id="floor-5">
@@ -358,6 +368,21 @@
   </section></div>
 
   <div class="floor-row right"><section class="floor reveal" id="floor-6">
+    <div class="tag"><span class="dot"></span>项目 04</div>
+    <h2>AI 编程做微信小程序 ·「每日一杯」</h2>
+    <div class="stage-sub">2026 · 已产出可运行 MVP</div>
+    <p class="soft">用 AI Coding（Codex / Claude Code）按关卡制流程，独立跑通从需求到产品的完整闭环。</p>
+    <div class="chipflow">
+      <div class="step"><div class="n">需求验证</div><p>豆瓣「奶茶小组」（16 万人）评论区掘金找信号 + 实测两款竞品，定位差异化白地——没人做「今日大家在喝」实时流、保留一句话人味评价、克制变现</p></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">方案</div><p>写 PRD、roadmap、UI 元素 / 交互文档</p></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">开发</div><p>产出 v1.3 可运行小程序（日历打卡 + 今日糖分热量估算 + 今日在喝 feed），AppID 已注册，个人主体 + 微信云开发规划</p></div>
+    </div>
+    <p class="soft">下一步：接云开发 + 腾讯混元视觉识别（拍照识别品牌 / 参数）+ 商品智能抠图。</p>
+  </section></div>
+
+  <div class="floor-row left"><section class="floor reveal" id="floor-7">
     <div class="tag"><span class="dot"></span>以前创业</div>
     <h2>「知行合一读书」App</h2>
     <div class="stage-sub">联合创始人 · 2019 — 2024</div>
@@ -374,7 +399,7 @@
     <div class="app-note soft"><p class="soft" style="margin-top:10px;">App 已经停止运营了，这几张是当时留下的真实界面截图。</p></div>
   </section></div>
 
-  <div class="floor-row left"><section class="floor reveal" id="floor-7">
+  <div class="floor-row right"><section class="floor reveal" id="floor-8">
     <div class="tag"><span class="dot"></span>常用工具</div>
     <h2>手边常用的东西</h2>
     <div class="skillgroup">
@@ -383,7 +408,7 @@
     </div>
     <div class="skillgroup">
       <div class="skillgroup-label">动手做过的技术活</div>
-      <div class="chips"><span class="chip">写爬虫抓学术数据库</span><span class="chip">DeepSeek API 接入</span><span class="chip">Web 网站开发</span><span class="chip">Agent 工作流编排</span><span class="chip">提示词链设计</span><span class="chip">多库检索去重</span><span class="chip">视频生成与自动剪辑流程</span><span class="chip">自建并维护 VPS 服务器</span></div>
+      <div class="chips"><span class="chip">写爬虫抓学术数据库</span><span class="chip">DeepSeek API 接入</span><span class="chip">Web 网站开发</span><span class="chip">微信小程序开发</span><span class="chip">Agent 工作流编排</span><span class="chip">提示词链设计</span><span class="chip">多库检索去重</span><span class="chip">安卓自动化（ADB / OCR）</span><span class="chip">Playwright 持久化采集</span><span class="chip">视频生成与自动剪辑流程</span><span class="chip">自建并维护 VPS 服务器</span></div>
     </div>
     <div class="skillgroup">
       <div class="skillgroup-label">业务上做过的事</div>
@@ -391,7 +416,7 @@
     </div>
   </section></div>
 
-  <div class="floor-row right"><section class="floor reveal" id="floor-8" style="max-width:none;">
+  <div class="floor-row left"><section class="floor reveal" id="floor-9" style="max-width:none;">
     <div class="seal-graphic">已阅</div>
     <p style="font-size:17px; font-weight:600;">看到这儿了，剩下的当面聊。</p>
     <div class="envblock">
