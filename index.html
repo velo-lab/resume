@@ -282,13 +282,7 @@
 
   @media (max-width:640px){ .floor{ padding:10px 4px; } }
 
-  /* ================= 内联编辑模式 ================= */
-  .ed-toggle{ position:fixed; left:14px; bottom:14px; z-index:59;
-    font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft);
-    background:var(--paper); border:1px solid var(--line); border-radius:8px;
-    padding:6px 11px; cursor:pointer; opacity:.5; transition:opacity .15s; box-shadow:var(--shadow); }
-  .ed-toggle:hover{ opacity:1; color:var(--ink); border-color:var(--seal-line); }
-  body.edit-mode .ed-toggle{ display:none; }
+  /* ================= 内联编辑模式（仅本人 ?edit 触发，访客无入口） ================= */
   body.edit-mode .pet{ display:none !important; }
   body.edit-mode .reveal{ opacity:1 !important; transform:none !important; }
   body.edit-mode [data-ed]{ outline:1px dashed transparent; outline-offset:3px; border-radius:3px; transition:outline-color .12s, background .12s; cursor:text; }
@@ -1117,25 +1111,11 @@
   })();
 
   // ================= 内联编辑模式 =================
-  // 进入编辑：点左下角「✏️ 编辑」；或网址加 ?edit / #edit；或按 Ctrl/Cmd+Shift+E
-  // 退出：点工具条「退出编辑」
+  // 访客看不到任何入口。只有本人在网址后加 ?edit（或 #edit）才会进入编辑。
+  // 退出：点工具条「退出编辑」。
   (function(){
     var LS_ON = 'resumeEditOn', LS_DATA = 'resumeEditData';
     var activated = false;
-
-    // 小铅笔按钮 —— 任何环境都能进（artifact 预览里 ?edit 不一定传得进 iframe）
-    var toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.className = 'ed-toggle';
-    toggle.setAttribute('data-edit-ui', '');
-    toggle.setAttribute('aria-label', '编辑内容');
-    toggle.textContent = '✏️ 编辑';
-    toggle.addEventListener('click', activate);
-    (document.body || document.documentElement).appendChild(toggle);
-
-    document.addEventListener('keydown', function(e){
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'E' || e.key === 'e')) { e.preventDefault(); activate(); }
-    });
 
     if (/(^|[?&])edit(=|&|$)/.test(location.search) || /edit/.test(location.hash) || localStorage.getItem(LS_ON) === '1') {
       activate();
