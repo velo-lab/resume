@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>王维露 · Token 账本</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --panel-2:#1c232d; --line:#2b333d; --line-soft:#232a33;
+    --tx:#e6e9ef; --tx-soft:#9aa4b2; --tx-faint:#69727e;
+    --accent:#e86a4f; --good:#46c98b; --warn:#e0b64f;
+    --cc:#e8875a; --codex:#5b8def; --hermes:#a874e0; --workbuddy:#e0574f; --codebuddy:#e0a24f; --tool-x:#7a8698;
+    --radius:12px;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  html{ background:var(--bg); }
+  body{
+    margin:0; background:var(--bg); color:var(--tx);
+    font-family:var(--sans); font-size:14px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    padding:28px 20px 64px;
+  }
+  a{ color:inherit; }
+  .wrap{ max-width:1080px; margin:0 auto; }
+
+  /* header */
+  .top{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:6px; }
+  .brand{ font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--tx-faint); font-family:var(--mono); }
+  h1{ font-size:20px; margin:2px 0 4px; font-weight:650; letter-spacing:.01em; }
+  .sub{ color:var(--tx-soft); font-size:12.5px; font-family:var(--mono); }
+  .sub .dot{ color:var(--tx-faint); margin:0 7px; }
+  .live{ display:inline-flex; align-items:center; gap:6px; color:var(--good); }
+  .live::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--good); box-shadow:0 0 0 0 rgba(70,201,139,.5); animation:pulse 2.2s infinite; }
+  @keyframes pulse{ 70%{ box-shadow:0 0 0 8px rgba(70,201,139,0); } 100%{ box-shadow:0 0 0 0 rgba(70,201,139,0); } }
+  .back{ font-size:12.5px; color:var(--tx-soft); text-decoration:none; font-family:var(--mono); border:1px solid var(--line); padding:6px 12px; border-radius:8px; white-space:nowrap; }
+  .back:hover{ border-color:var(--tx-faint); color:var(--tx); }
+
+  /* range tabs */
+  .ranges{ display:flex; gap:6px; flex-wrap:wrap; margin:18px 0 20px; }
+  .ranges button{
+    font-family:var(--mono); font-size:12.5px; color:var(--tx-soft);
+    background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:6px 14px; cursor:pointer; transition:.14s;
+  }
+  .ranges button:hover{ color:var(--tx); border-color:var(--tx-faint); }
+  .ranges button[aria-pressed="true"]{ background:var(--accent); border-color:var(--accent); color:#1a0f0c; font-weight:600; }
+  .asof{ margin-left:auto; align-self:center; color:var(--tx-faint); font-size:12px; font-family:var(--mono); }
+
+  /* grid */
+  .grid{ display:grid; grid-template-columns:repeat(12,1fr); gap:14px; }
+  .panel{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 16px 14px; min-width:0; }
+  .panel h2{ font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--tx-faint); margin:0 0 12px; font-weight:600; font-family:var(--mono); }
+  .col-3{ grid-column:span 3; } .col-4{ grid-column:span 4; } .col-5{ grid-column:span 5; }
+  .col-6{ grid-column:span 6; } .col-7{ grid-column:span 7; } .col-8{ grid-column:span 8; } .col-12{ grid-column:span 12; }
+  @media (max-width:900px){ .col-3,.col-4,.col-5,.col-6,.col-7,.col-8{ grid-column:span 12; } }
+
+  /* tiles */
+  .tiles{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  @media (max-width:900px){ .tiles{ grid-template-columns:repeat(2,1fr); } }
+  .tile{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 15px; }
+  .tile .k{ font-size:11px; color:var(--tx-faint); font-family:var(--mono); letter-spacing:.06em; display:flex; justify-content:space-between; gap:8px; }
+  .tile .delta{ font-family:var(--mono); }
+  .tile .delta.up{ color:var(--good); } .tile .delta.down{ color:var(--accent); }
+  .tile .v{ font-size:26px; font-weight:650; font-family:var(--mono); margin:5px 0 1px; letter-spacing:-.01em; font-variant-numeric:tabular-nums; }
+  .tile .v small{ font-size:13px; color:var(--tx-soft); font-weight:500; margin-left:2px; }
+  .tile .c{ font-size:11.5px; color:var(--tx-faint); }
+
+  /* key facts */
+  .facts{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px 22px; }
+  @media (max-width:900px){ .facts{ grid-template-columns:repeat(2,1fr); } }
+  .fact .fk{ font-size:11px; color:var(--tx-faint); font-family:var(--mono); }
+  .fact .fv{ font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; }
+
+  /* bar lists */
+  .barrow{ display:grid; grid-template-columns:120px 1fr 92px; align-items:center; gap:10px; margin:9px 0; font-size:12.5px; }
+  .barrow .nm{ color:var(--tx-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:var(--mono); }
+  .barrow .track{ background:var(--panel-2); border-radius:5px; height:9px; overflow:hidden; }
+  .barrow .fill{ height:100%; border-radius:5px; }
+  .barrow .val{ text-align:right; font-family:var(--mono); color:var(--tx); font-variant-numeric:tabular-nums; }
+  .barrow .val i{ color:var(--tx-faint); font-style:normal; font-size:11px; margin-left:5px; }
+
+  /* legend */
+  .legend{ display:flex; flex-wrap:wrap; gap:12px; margin-top:10px; font-size:11.5px; color:var(--tx-soft); font-family:var(--mono); }
+  .legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .legend i{ width:9px; height:9px; border-radius:2px; display:inline-block; }
+
+  /* svg */
+  svg{ display:block; width:100%; overflow:visible; }
+  .axis{ fill:var(--tx-faint); font-size:9px; font-family:var(--mono); }
+  .gridline{ stroke:var(--line-soft); stroke-width:1; }
+
+  /* heatmap */
+  .heat rect{ rx:2; }
+
+  /* table */
+  .tbl-wrap{ overflow-x:auto; }
+  table{ width:100%; border-collapse:collapse; font-size:12px; font-family:var(--mono); }
+  th,td{ text-align:right; padding:7px 10px; border-bottom:1px solid var(--line-soft); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  th{ color:var(--tx-faint); font-weight:500; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; position:sticky; top:0; background:var(--panel); }
+  th:first-child,td:first-child{ text-align:left; }
+  tbody tr:hover{ background:var(--panel-2); }
+  td .mini{ display:inline-block; width:44px; height:6px; border-radius:3px; background:var(--panel-2); overflow:hidden; vertical-align:middle; }
+  td .mini i{ display:block; height:100%; background:var(--good); }
+
+  .foot{ margin-top:26px; color:var(--tx-faint); font-size:11.5px; font-family:var(--mono); text-align:center; }
+  .foot a{ color:var(--tx-soft); }
+  .empty{ text-align:center; color:var(--tx-soft); padding:60px 20px; font-family:var(--mono); font-size:13px; }
+  .note{ color:var(--tx-faint); font-size:11px; margin-top:8px; font-family:var(--mono); }
+  @media (prefers-reduced-motion:reduce){ .live::before{ animation:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="brand">Token 账本</div>
+      <h1 id="who">我的 Token</h1>
+      <div class="sub" id="meta">加载中…</div>
+    </div>
+    <a class="back" href="./">← 回简历</a>
+  </div>
+
+  <div class="ranges" id="ranges">
+    <button data-r="1">今天</button>
+    <button data-r="2">昨天</button>
+    <button data-r="7">近 7 天</button>
+    <button data-r="30" aria-pressed="true">近 30 天</button>
+    <button data-r="90">近 90 天</button>
+    <button data-r="0">全部</button>
+    <span class="asof" id="asof"></span>
+  </div>
+
+  <div id="app" hidden>
+    <div class="tiles" id="tiles"></div>
+
+    <div class="panel col-12" style="margin-top:14px;">
+      <h2>关键事实</h2>
+      <div class="facts" id="facts"></div>
+    </div>
+
+    <div class="grid" style="margin-top:14px;">
+      <div class="panel col-8">
+        <h2>每天用量（含缓存 · 按工具堆叠）</h2>
+        <div id="c-daily"></div>
+        <div class="legend" id="lg-daily"></div>
+      </div>
+      <div class="panel col-4">
+        <h2>Token 构成</h2>
+        <div id="c-comp"></div>
+        <div class="legend" id="lg-comp"></div>
+        <div class="note" id="comp-note"></div>
+      </div>
+
+      <div class="panel col-7">
+        <h2>每天用了多少（日历热力）</h2>
+        <div id="c-heat"></div>
+      </div>
+      <div class="panel col-5">
+        <h2>按工具</h2>
+        <div id="c-tool"></div>
+      </div>
+
+      <div class="panel col-6">
+        <h2>每日成本（估算）</h2>
+        <div id="c-cost"></div>
+      </div>
+      <div class="panel col-6">
+        <h2>按模型 · Top 8</h2>
+        <div id="c-model"></div>
+      </div>
+
+      <div class="panel col-7">
+        <h2>缓存命中率</h2>
+        <div id="c-hit"></div>
+      </div>
+      <div class="panel col-5">
+        <h2>按设备</h2>
+        <div id="c-device"></div>
+      </div>
+
+      <div class="panel col-12">
+        <h2>按天明细</h2>
+        <div class="tbl-wrap"><table id="tbl"></table></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="empty" class="empty" hidden>
+    数据同步未接入。<br>在两台机器上跑 <b>opentoken-sync</b> 生成 <code>usage-velo.json</code> / <code>usage-grace.json</code> 后，此页自动生效。
+  </div>
+
+  <div class="foot">
+    数据来自本机 <span style="color:var(--tx-soft)">opentoken preview --json</span>（= 生财榜单收到的数字）·
+    成本为按公开模型价目表的估算 ·
+    <a href="https://scys.com/tokenrank" target="_blank" rel="noopener">同款公开榜 scys.com/tokenrank ↗</a>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var YI = 1e8, WAN = 1e4;
+  var TOOL_LABEL = { "claude-code":"Claude Code", "codex":"Codex", "hermes":"Hermes", "workbuddy":"WorkBuddy", "codebuddy":"CodeBuddy" };
+  var css = getComputedStyle(document.documentElement);
+  function tv(n){ return (css.getPropertyValue(n)||"").trim(); }
+  var TOOL_COLOR = { "claude-code":tv("--cc"), "codex":tv("--codex"), "hermes":tv("--hermes"), "workbuddy":tv("--workbuddy"), "codebuddy":tv("--codebuddy") };
+  var TOOL_X = tv("--tool-x"), ACCENT = tv("--accent"), GOOD = tv("--good"), FAINT = tv("--tx-faint");
+  var MODEL_PALETTE = ["#e8875a","#5b8def","#a874e0","#46c98b","#e0b64f","#e0574f","#5bc2d4","#b8b8c4"];
+
+  // price per 1e6 tokens: [input, output, cache_read, cache_write] — public list-price estimate
+  var PRICES = {
+    "claude-opus-4-8":[15,75,1.5,18.75], "claude-opus-4-7":[15,75,1.5,18.75], "claude-opus-5":[15,75,1.5,18.75],
+    "claude-sonnet-5":[3,15,0.30,3.75], "claude-sonnet-4-6":[3,15,0.30,3.75], "claude-sonnet-4-5":[3,15,0.30,3.75],
+    "claude-fable-5":[0.80,4,0.08,1.0], "claude-fable-5-1":[0.80,4,0.08,1.0], "claude-haiku-4-5":[0.80,4,0.08,1.0],
+    "gpt-5.5":[1.25,10,0.125,1.25], "gpt-5.6-sol":[1.25,10,0.125,1.25], "gpt-5.4":[1.25,10,0.125,1.25],
+    "codex-auto-review":[1.25,10,0.125,1.25],
+    "deepseek-v4-pro":[0.27,1.10,0.07,0.27], "deepseek-v4-flash":[0.10,0.40,0.03,0.10]
+  };
+  var DEF_PRICE = [3,15,0.30,3.75];
+  function priceOf(model){
+    var m = String(model||"").toLowerCase().replace(/^.*\//,"");
+    return PRICES[m] || DEF_PRICE;
+  }
+  function rowCost(r){
+    var p = priceOf(r.model);
+    return r.input/1e6*p[0] + r.output/1e6*p[1] + r.cache_read/1e6*p[2] + r.cache_write/1e6*p[3];
+  }
+  function rowSaving(r){ // vs paying input price for cache reads
+    var p = priceOf(r.model);
+    return r.cache_read/1e6*(p[0]-p[2]);
+  }
+
+  function fmtTok(n){
+    if(n==null||isNaN(n)) return "—";
+    if(n>=YI) return (n/YI>=100?Math.round(n/YI):(n/YI).toFixed(2))+" 亿";
+    if(n>=WAN) return (n/WAN>=100?Math.round(n/WAN):(n/WAN).toFixed(1))+" 万";
+    return String(Math.round(n));
+  }
+  function fmtUsd(n){ return n>=100 ? "$"+Math.round(n) : "$"+n.toFixed(2); }
+  function fmtDur(sec){
+    var m = Math.round(sec/60);
+    if(m<60) return m+" 分钟";
+    return (m/60).toFixed(1)+" 小时";
+  }
+  function pct(a,b){ return b>0 ? (a/b*100) : 0; }
+  function ago(ts){
+    if(!ts) return "—";
+    var s=(Date.now()-ts)/1000;
+    if(s<90) return "刚刚";
+    if(s<5400) return Math.round(s/60)+" 分钟前";
+    if(s<172800) return Math.round(s/3600)+" 小时前";
+    return Math.round(s/86400)+" 天前";
+  }
+  function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+  var $ = function(id){ return document.getElementById(id); };
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function svg(w,h){
+    var e = document.createElementNS(SVGNS,"svg");
+    e.setAttribute("viewBox","0 0 "+w+" "+h);
+    e.setAttribute("preserveAspectRatio","xMidYMid meet");
+    e.style.height = h+"px";
+    return e;
+  }
+  function el(tag,attrs,parent){
+    var e = document.createElementNS(SVGNS,tag);
+    for(var k in attrs) e.setAttribute(k,attrs[k]);
+    if(parent) parent.appendChild(e);
+    return e;
+  }
+
+  // ---- load ----
+  var SOURCES = ["usage-velo.json","usage-grace.json"];
+  var loaded = [];
+  if (window.__USAGE__) { boot(window.__USAGE__); }
+  else {
+    Promise.all(SOURCES.map(function(u){
+      return fetch(u,{cache:"no-store"}).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; });
+    })).then(function(list){ boot(list.filter(Boolean)); });
+  }
+
+  var ROWS=[], SESS=[], MACHINES=[], UPDATED=0, DAYS_ALL=[], curR=30;
+
+  function boot(list){
+    if(!list || !list.length){ $("empty").hidden=false; $("meta").textContent="—"; return; }
+    list.forEach(function(d){
+      var m = d.machine||"?";
+      MACHINES.push({ name:m, updated:+d.updated||0 });
+      UPDATED = Math.max(UPDATED, +d.updated||0);
+      (d.rows||[]).forEach(function(r){ r.machine=m; ROWS.push(r); });
+      (d.sessions||[]).forEach(function(s){ s.machine=m; SESS.push(s); });
+    });
+    DAYS_ALL = uniqSorted(ROWS.map(function(r){ return r.date; }));
+    $("app").hidden=false;
+    $("who").textContent = "路易 · 我的 Token";
+    var latest = DAYS_ALL[DAYS_ALL.length-1] || "";
+    $("meta").innerHTML =
+      "路易 <span class='dot'>·</span> "+MACHINES.length+" 台设备 <span class='dot'>·</span> 同步 "+ago(UPDATED)+
+      " <span class='dot'>·</span> "+latest+" <span class='dot'>·</span> <span class='live'>实时</span>";
+    $("ranges").addEventListener("click",function(e){
+      var b=e.target.closest("button[data-r]"); if(!b) return;
+      curR = +b.getAttribute("data-r");
+      [].forEach.call(this.querySelectorAll("button"),function(x){ x.setAttribute("aria-pressed", x===b?"true":"false"); });
+      render();
+    });
+    render();
+  }
+
+  function uniqSorted(a){ var s={}; a.forEach(function(x){ s[x]=1; }); return Object.keys(s).sort(); }
+  function addDays(d,n){
+    var t=new Date(d+"T12:00:00"); t.setDate(t.getDate()+n);
+    return t.getFullYear()+"-"+("0"+(t.getMonth()+1)).slice(-2)+"-"+("0"+t.getDate()).slice(-2);
+  }
+
+  function rangeDates(){
+    var latest = DAYS_ALL[DAYS_ALL.length-1];
+    if(curR===0) return { from:DAYS_ALL[0], to:latest, label:"全部" };
+    if(curR===1) return { from:latest, to:latest, label:"今天" };
+    if(curR===2){ var y=DAYS_ALL[DAYS_ALL.length-2]||latest; return { from:y, to:y, label:"昨天" }; }
+    return { from:addDays(latest,-(curR-1)), to:latest, label:"近 "+curR+" 天" };
+  }
+
+  function render(){
+    var rd = rangeDates();
+    $("asof").textContent = rd.from===rd.to ? rd.from : (rd.from+" → "+rd.to);
+    var rows = ROWS.filter(function(r){ return r.date>=rd.from && r.date<=rd.to; });
+    var sess = SESS.filter(function(s){ return s.date>=rd.from && s.date<=rd.to; });
+
+    // per-day aggregate
+    var days = uniqSorted(rows.map(function(r){ return r.date; }));
+    var byDay = {};
+    days.forEach(function(d){ byDay[d]={ tot:0,input:0,output:0,cr:0,cw:0,cost:0,save:0,tools:{},models:{} }; });
+    var toolTot={}, modelTot={}, devTot={}, sumIn=0,sumOut=0,sumCR=0,sumCW=0,sumCost=0,sumSave=0;
+    rows.forEach(function(r){
+      var t = r.input+r.output+r.cache_read+r.cache_write;
+      var b = byDay[r.date];
+      b.tot+=t; b.input+=r.input; b.output+=r.output; b.cr+=r.cache_read; b.cw+=r.cache_write;
+      var c=rowCost(r), sv=rowSaving(r); b.cost+=c; b.save+=sv;
+      b.tools[r.tool]=(b.tools[r.tool]||0)+t;
+      b.models[r.model]=(b.models[r.model]||0)+t;
+      toolTot[r.tool]=(toolTot[r.tool]||0)+t;
+      modelTot[r.model]=(modelTot[r.model]||0)+t;
+      devTot[r.machine]=(devTot[r.machine]||0)+t;
+      sumIn+=r.input; sumOut+=r.output; sumCR+=r.cache_read; sumCW+=r.cache_write; sumCost+=c; sumSave+=sv;
+    });
+    var grand = sumIn+sumOut+sumCR+sumCW;
+    var activeDays = days.length;
+    var avgDay = activeDays ? grand/activeDays : 0;
+    var latestDay = days[days.length-1];
+    var latestTot = latestDay ? byDay[latestDay].tot : 0;
+
+    var sessCount=0, msgCount=0, activeSec=0;
+    sess.forEach(function(s){ sessCount+=s.sessions||0; msgCount+=s.messages||0; activeSec+=s.active_seconds||0; });
+
+    var toolsSorted = Object.keys(toolTot).sort(function(a,b){ return toolTot[b]-toolTot[a]; });
+    var mainTool = toolsSorted[0];
+    var hitRate = pct(sumCR, sumIn+sumCR+sumCW);
+
+    // streak (consecutive active days ending latest, all-time)
+    var streak=0;
+    if(DAYS_ALL.length){
+      var cur = DAYS_ALL[DAYS_ALL.length-1], set={}; DAYS_ALL.forEach(function(d){ set[d]=1; });
+      while(set[cur]){ streak++; cur = addDays(cur,-1); }
+    }
+    var sinceDays = DAYS_ALL.length ? (Math.round((new Date(DAYS_ALL[DAYS_ALL.length-1]) - new Date(DAYS_ALL[0]))/86400000)+1) : 0;
+
+    // all-time daily totals for record / rank
+    var allByDay={}; ROWS.forEach(function(r){ allByDay[r.date]=(allByDay[r.date]||0)+r.input+r.output+r.cache_read+r.cache_write; });
+    var allVals = Object.keys(allByDay).map(function(d){ return {d:d,v:allByDay[d]}; }).sort(function(a,b){ return b.v-a.v; });
+    var record = allVals[0]||{d:"—",v:0};
+    var rank = allVals.findIndex(function(x){ return x.d===DAYS_ALL[DAYS_ALL.length-1]; }) + 1;
+
+    // ---- tiles ----
+    var effTok = sumIn+sumOut;
+    var tiles = [
+      { k:"当日消耗", delta: avgDay? (latestTot/avgDay) : 0, v:fmtTok(latestTot), c:"日均的 "+((latestTot/(avgDay||1))||0).toFixed(1)+" 倍" },
+      { k:"预估成本", v:fmtUsd(sumCost), c:"缓存省 ≈"+fmtUsd(sumSave) },
+      { k:"有效 token", v:fmtTok(effTok), c:"占 "+pct(effTok,grand).toFixed(1)+"%（其余为缓存）" },
+      { k:"对话次数", v:String(sessCount), c:"次均 "+fmtTok(sessCount? grand/sessCount : 0) },
+      { k:"使用工具", v:String(toolsSorted.length), c:"主力 "+(TOOL_LABEL[mainTool]||mainTool||"—") },
+      { k:"AI 耗时", v:fmtDur(activeSec), c:"日均 "+fmtDur(activeDays? activeSec/activeDays : 0) },
+      { k:"缓存命中", v:hitRate.toFixed(1), c:"缓存读 "+fmtTok(sumCR), unit:"%" },
+      { k:"活跃", v:String(activeDays), c:"接入以来 "+sinceDays+" 天", unit:" 天" }
+    ];
+    $("tiles").innerHTML = tiles.map(function(t){
+      var d="";
+      if(t.delta){ var up=t.delta>=1; d='<span class="delta '+(up?"up":"down")+'">'+(up?"↑":"↓")+" "+Math.round((t.delta-1)*100)+"%</span>"; }
+      return '<div class="tile"><div class="k">'+t.k+d+'</div>'+
+             '<div class="v">'+t.v+(t.unit?'<small>'+t.unit+'</small>':'')+'</div>'+
+             '<div class="c">'+t.c+'</div></div>';
+    }).join("");
+
+    // ---- key facts ----
+    $("facts").innerHTML = [
+      ["当日全史排位", rank>0 ? ("第 "+rank+" / "+allVals.length+" 个活跃日") : "—"],
+      ["单日纪录", fmtTok(record.v)+" · "+record.d],
+      ["连续活跃", streak+" 天"],
+      ["接入以来", DAYS_ALL[0]+" 起 · "+DAYS_ALL.length+" 个活跃日"]
+    ].map(function(f){ return '<div class="fact"><div class="fk">'+f[0]+'</div><div class="fv">'+f[1]+'</div></div>'; }).join("");
+
+    // ---- daily stacked (by tool) ----
+    drawStacked($("c-daily"), days, byDay, toolsSorted, "tools", function(t){ return TOOL_COLOR[t]||TOOL_X; }, function(v){ return fmtTok(v); });
+    $("lg-daily").innerHTML = toolsSorted.map(function(t){
+      return '<span><i style="background:'+(TOOL_COLOR[t]||TOOL_X)+'"></i>'+(TOOL_LABEL[t]||t)+'</span>';
+    }).join("");
+
+    // ---- token composition ----
+    drawComposition($("c-comp"), [
+      ["输入", sumIn, "#5b8def"], ["输出", sumOut, "#46c98b"],
+      ["缓存读", sumCR, "#7a8698"], ["缓存写", sumCW, "#e0b64f"]
+    ]);
+    $("comp-note").textContent = "缓存节省 ≈"+fmtUsd(sumSave)+"（缓存读按输入价折算）";
+
+    // ---- heatmap ----
+    drawHeat($("c-heat"), rd.from, rd.to, allByDay);
+
+    // ---- by tool ----
+    drawBars($("c-tool"), toolsSorted.map(function(t){ return { nm:TOOL_LABEL[t]||t, v:toolTot[t], color:TOOL_COLOR[t]||TOOL_X }; }), grand, fmtTok);
+
+    // ---- daily cost ----
+    drawValueBars($("c-cost"), days.map(function(d){ return { x:d.slice(5), v:byDay[d].cost }; }), function(v){ return fmtUsd(v); }, ACCENT);
+
+    // ---- by model top 8 ----
+    var ms = Object.keys(modelTot).sort(function(a,b){ return modelTot[b]-modelTot[a]; }).slice(0,8);
+    drawBars($("c-model"), ms.map(function(m,i){ return { nm:m.replace(/^.*\//,""), v:modelTot[m], color:MODEL_PALETTE[i%MODEL_PALETTE.length] }; }), grand, fmtTok);
+
+    // ---- cache hit line ----
+    drawLine($("c-hit"), days.map(function(d){
+      var b=byDay[d]; return { x:d.slice(5), v:pct(b.cr, b.input+b.cr+b.cw) };
+    }), function(v){ return v.toFixed(0)+"%"; }, 100);
+
+    // ---- by device ----
+    var devs = Object.keys(devTot).sort(function(a,b){ return devTot[b]-devTot[a]; });
+    drawBars($("c-device"), devs.map(function(m,i){ return { nm:m, v:devTot[m], color:i? "#5b8def":"#46c98b" }; }), grand, fmtTok);
+
+    // ---- table ----
+    var toolCols = toolsSorted.slice(0,4);
+    var head = "<thead><tr><th>日期</th>"+toolCols.map(function(t){ return "<th>"+(TOOL_LABEL[t]||t)+"</th>"; }).join("")+
+               "<th>合计</th><th>成本</th><th>会话</th><th>命中率</th></tr></thead>";
+    var sessByDay={}; sess.forEach(function(s){ sessByDay[s.date]=(sessByDay[s.date]||0)+(s.sessions||0); });
+    var body = days.slice().reverse().map(function(d){
+      var b=byDay[d];
+      var hr = pct(b.cr, b.input+b.cr+b.cw);
+      return "<tr><td>"+d+"</td>"+
+        toolCols.map(function(t){ return "<td>"+(b.tools[t]? fmtTok(b.tools[t]) : "—")+"</td>"; }).join("")+
+        "<td><b>"+fmtTok(b.tot)+"</b></td>"+
+        "<td>"+fmtUsd(b.cost)+"</td>"+
+        "<td>"+(sessByDay[d]||0)+"</td>"+
+        "<td>"+hr.toFixed(1)+"% <span class='mini'><i style='width:"+hr.toFixed(0)+"%'></i></span></td></tr>";
+    }).join("");
+    $("tbl").innerHTML = head+"<tbody>"+body+"</tbody>";
+  }
+
+  // ===== chart primitives =====
+  function drawStacked(host, days, byDay, keys, prop, colorFn, fmt){
+    host.innerHTML="";
+    var W=620,H=210, ml=44,mr=8,mt=8,mb=22;
+    var s=svg(W,H), iw=W-ml-mr, ih=H-mt-mb;
+    var max=0; days.forEach(function(d){ if(byDay[d].tot>max) max=byDay[d].tot; });
+    max = niceMax(max);
+    [0,.25,.5,.75,1].forEach(function(f){
+      var y=mt+ih-ih*f;
+      el("line",{x1:ml,y1:y,x2:W-mr,y2:y,class:"gridline"},s);
+      el("text",{x:ml-6,y:y+3,"text-anchor":"end",class:"axis"},s).textContent = fmt(max*f);
+    });
+    var n=days.length, gap = n>60?0.5:2;
+    var bw = Math.max(1,(iw/n)-gap);
+    days.forEach(function(d,i){
+      var x = ml + i*(iw/n);
+      var acc=0, b=byDay[d];
+      keys.forEach(function(k){
+        var v=b[prop][k]||0; if(!v) return;
+        var h = (v/max)*ih;
+        var y = mt+ih-acc-h;
+        el("rect",{x:x,y:y,width:bw,height:Math.max(0.6,h),fill:colorFn(k)},s);
+        acc+=h;
+      });
+    });
+    // x labels: ~6
+    var step=Math.max(1,Math.round(n/6));
+    days.forEach(function(d,i){
+      if(i%step) return;
+      el("text",{x:ml+i*(iw/n)+bw/2,y:H-6,"text-anchor":"middle",class:"axis"},s).textContent=d.slice(5);
+    });
+    host.appendChild(s);
+  }
+
+  function drawValueBars(host, arr, fmt, color){
+    host.innerHTML="";
+    var W=560,H=190, ml=46,mr=8,mt=8,mb=22;
+    var s=svg(W,H), iw=W-ml-mr, ih=H-mt-mb;
+    var max=niceMax(Math.max.apply(null, arr.map(function(a){return a.v;}).concat([0.0001])));
+    [0,.5,1].forEach(function(f){
+      var y=mt+ih-ih*f;
+      el("line",{x1:ml,y1:y,x2:W-mr,y2:y,class:"gridline"},s);
+      el("text",{x:ml-6,y:y+3,"text-anchor":"end",class:"axis"},s).textContent=fmt(max*f);
+    });
+    var n=arr.length, gap=n>60?0.5:2, bw=Math.max(1,(iw/n)-gap);
+    arr.forEach(function(a,i){
+      var h=(a.v/max)*ih, x=ml+i*(iw/n);
+      el("rect",{x:x,y:mt+ih-h,width:bw,height:Math.max(0.6,h),fill:color,opacity:0.85},s);
+    });
+    var step=Math.max(1,Math.round(n/6));
+    arr.forEach(function(a,i){ if(i%step) return;
+      el("text",{x:ml+i*(iw/n)+bw/2,y:H-6,"text-anchor":"middle",class:"axis"},s).textContent=a.x;
+    });
+    host.appendChild(s);
+  }
+
+  function drawLine(host, arr, fmt, fixedMax){
+    host.innerHTML="";
+    var W=560,H=170, ml=42,mr=8,mt=8,mb=22;
+    var s=svg(W,H), iw=W-ml-mr, ih=H-mt-mb;
+    var max=fixedMax||niceMax(Math.max.apply(null,arr.map(function(a){return a.v;}).concat([1])));
+    var min=0;
+    // shade band 88-100 style? keep simple
+    [0,.5,1].forEach(function(f){
+      var y=mt+ih-ih*f;
+      el("line",{x1:ml,y1:y,x2:W-mr,y2:y,class:"gridline"},s);
+      el("text",{x:ml-6,y:y+3,"text-anchor":"end",class:"axis"},s).textContent=fmt(max*f);
+    });
+    if(arr.length){
+      var n=arr.length;
+      var pts=arr.map(function(a,i){
+        var x=ml+(n===1?0:(i/(n-1))*iw);
+        var y=mt+ih-((a.v-min)/(max-min))*ih;
+        return [x,y];
+      });
+      var dPath=pts.map(function(p,i){ return (i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1); }).join(" ");
+      var area=dPath+" L"+pts[pts.length-1][0].toFixed(1)+" "+(mt+ih)+" L"+pts[0][0].toFixed(1)+" "+(mt+ih)+" Z";
+      el("path",{d:area,fill:GOOD,opacity:0.10},s);
+      el("path",{d:dPath,fill:"none",stroke:GOOD,"stroke-width":1.8,"stroke-linejoin":"round"},s);
+      el("circle",{cx:pts[pts.length-1][0],cy:pts[pts.length-1][1],r:2.6,fill:GOOD},s);
+      var step=Math.max(1,Math.round(n/6));
+      arr.forEach(function(a,i){ if(i%step) return;
+        el("text",{x:ml+(n===1?0:(i/(n-1))*iw),y:H-6,"text-anchor":"middle",class:"axis"},s).textContent=a.x;
+      });
+    }
+    host.appendChild(s);
+  }
+
+  function drawBars(host, items, grand, fmt){
+    host.innerHTML = items.map(function(it){
+      var p = grand>0 ? (it.v/grand*100) : 0;
+      return '<div class="barrow"><span class="nm">'+esc(it.nm)+'</span>'+
+        '<span class="track"><span class="fill" style="width:'+Math.max(1,p).toFixed(1)+'%;background:'+it.color+'"></span></span>'+
+        '<span class="val">'+fmt(it.v)+'<i>'+p.toFixed(1)+'%</i></span></div>';
+    }).join("");
+  }
+
+  function drawComposition(host, parts){
+    var tot = parts.reduce(function(a,p){ return a+p[1]; },0) || 1;
+    host.innerHTML =
+      '<div style="display:flex;height:20px;border-radius:6px;overflow:hidden;background:var(--panel-2)">'+
+      parts.map(function(p){ return '<div style="width:'+(p[1]/tot*100)+'%;background:'+p[2]+'"></div>'; }).join("")+
+      '</div>';
+    document.getElementById("lg-comp").innerHTML = parts.map(function(p){
+      return '<span><i style="background:'+p[2]+'"></i>'+p[0]+' '+(p[1]/tot*100).toFixed(1)+'%</span>';
+    }).join("");
+  }
+
+  function drawHeat(host, from, to, allByDay){
+    host.innerHTML="";
+    var start=new Date(from+"T12:00:00"), end=new Date(to+"T12:00:00");
+    // align start to Monday
+    var startDow=(start.getDay()+6)%7;
+    start.setDate(start.getDate()-startDow);
+    function iso(t){ return t.getFullYear()+"-"+("0"+(t.getMonth()+1)).slice(-2)+"-"+("0"+t.getDate()).slice(-2); }
+    var days=[]; for(var t=new Date(start); t<=end; t.setDate(t.getDate()+1)) days.push(iso(t));
+    var weeks=Math.ceil(days.length/7);
+    var cell=13, gap=3, W=weeks*(cell+gap)+30, H=7*(cell+gap)+16;
+    var s=svg(W,H); s.setAttribute("class","heat");
+    var vals=days.map(function(d){ return allByDay[d]||0; }).filter(function(v){return v>0;}).sort(function(a,b){return a-b;});
+    function q(v){
+      if(!v) return "#1c232d";
+      var r = vals.length? (vals.filter(function(x){return x<=v;}).length/vals.length) : 0;
+      var ramp=["#1e2f3a","#22506a","#2e7fae","#4aa6d6","#8fd0ec"];
+      return ramp[Math.min(ramp.length-1, Math.floor(r*ramp.length))];
+    }
+    var wd=["一","","三","","五","","日"];
+    wd.forEach(function(l,i){ if(l) el("text",{x:0,y:14+i*(cell+gap)+cell-2,class:"axis"},s).textContent=l; });
+    days.forEach(function(d,i){
+      var w=Math.floor(i/7), dow=i%7;
+      var rect=el("rect",{x:20+w*(cell+gap),y:14+dow*(cell+gap),width:cell,height:cell,rx:2,fill:q(allByDay[d]||0)},s);
+      var tt=el("title",{},rect); tt.textContent = d+" · "+fmtTok(allByDay[d]||0);
+    });
+    // month ticks
+    var lastM=null;
+    days.forEach(function(d,i){
+      if(i%7) return;
+      var m=d.slice(5,7);
+      if(m!==lastM){ lastM=m; el("text",{x:20+Math.floor(i/7)*(cell+gap),y:9,class:"axis"},s).textContent=(+m)+"月"; }
+    });
+    host.appendChild(s);
+  }
+
+  function niceMax(v){
+    if(v<=0) return 1;
+    var e=Math.pow(10,Math.floor(Math.log10(v)));
+    var f=v/e;
+    var nf = f<=1?1 : f<=2?2 : f<=2.5?2.5 : f<=5?5 : 10;
+    return nf*e;
+  }
+})();
+</script>
+</body>
+</html>
