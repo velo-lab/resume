@@ -99,9 +99,9 @@
   .hero-daily{ margin-top:20px; display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 12px; font-size:15px; color:var(--ink-soft); }
   .hero-daily .hd-label{ font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint); border:1px solid var(--line); border-radius:3px; padding:1px 7px; }
   .hero-daily .hd-tools b{ color:var(--ink); font-weight:600; }
-  .tokenbook{ display:block; margin-top:16px; max-width:360px; text-decoration:none; color:inherit;
+  .tokenbook{ display:block; margin-top:16px; max-width:560px; text-decoration:none; color:inherit;
     background:linear-gradient(180deg,var(--paper) 0%,var(--paper-2) 100%);
-    border:1px solid var(--line); border-radius:8px; padding:13px 15px 11px; box-shadow:var(--shadow);
+    border:1px solid var(--line); border-radius:8px; padding:14px 16px 12px; box-shadow:var(--shadow);
     transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
   .tokenbook:hover{ transform:translateY(-2px); box-shadow:0 16px 30px -16px rgba(36,39,32,.34); border-color:var(--seal-line); }
   .tb-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; }
@@ -115,9 +115,21 @@
   .tb-stat{ display:flex; flex-direction:column; gap:1px; }
   .tb-num{ font-family:"IBM Plex Mono",monospace; font-size:17px; font-weight:600; color:var(--ink); line-height:1.3; }
   .tb-cap{ font-size:10px; color:var(--ink-faint); letter-spacing:.05em; }
-  .tb-spark{ width:100%; height:36px; margin:8px 0 5px; display:block; overflow:visible; }
+  .tb-spark{ width:100%; height:104px; margin:12px 0 4px; display:block; overflow:visible; }
   .tb-spark path{ fill:none; stroke:var(--seal); stroke-width:1.6; stroke-linejoin:round; stroke-linecap:round; opacity:.55; }
-  .tb-foot{ font-size:10px; color:var(--ink-faint); line-height:1.55; }
+  .tb-spark rect.cc{ fill:var(--seal); }
+  .tb-spark rect.hermes{ fill:var(--seal); opacity:.5; }
+  .tb-spark rect.codex{ fill:var(--seal); opacity:.28; }
+  .tb-spark rect.other{ fill:var(--seal); opacity:.16; }
+  .tb-spark .tb-grid{ stroke:var(--line); stroke-width:1; }
+  .tb-spark text{ fill:var(--ink-faint); font-family:"IBM Plex Mono",monospace; font-size:8.5px; }
+  .tb-chartcap{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-top:10px; }
+  .tb-chartcap .cc-title{ font-family:"IBM Plex Mono",monospace; font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); }
+  .tb-legend{ display:flex; gap:12px; font-size:9.5px; color:var(--ink-soft); font-family:"IBM Plex Mono",monospace; }
+  .tb-legend span{ display:inline-flex; align-items:center; gap:4px; }
+  .tb-legend i{ width:8px; height:8px; border-radius:1px; background:var(--seal); display:inline-block; }
+  .tb-legend i.hermes{ opacity:.5; } .tb-legend i.codex{ opacity:.28; }
+  .tb-foot{ font-size:10px; color:var(--ink-faint); line-height:1.55; margin-top:6px; }
   @media (prefers-reduced-motion: reduce){ .tb-live.on::before{ animation:none; } }
   .projbox{ border:1px solid var(--seal-line); background:var(--seal-soft); border-radius:6px;
     padding:12px 15px; margin:4px 0 18px; font-size:14.5px; color:var(--ink); line-height:1.85; }
@@ -485,7 +497,11 @@
         <div class="tb-stat"><span class="tb-num" id="tbMonth">—</span><span class="tb-cap">本月</span></div>
         <div class="tb-stat"><span class="tb-num" id="tbTotal">—</span><span class="tb-cap">累计</span></div>
       </div>
-      <svg class="tb-spark" id="tbSpark" viewBox="0 0 240 36" preserveAspectRatio="none" aria-hidden="true" hidden><path id="tbSparkPath" d=""/></svg>
+      <div class="tb-chartcap" id="tbChartCap" hidden>
+        <span class="cc-title">每天用量 · 近 90 天 · 含缓存</span>
+        <span class="tb-legend"><span><i></i>Claude Code</span><span><i class="hermes"></i>Hermes</span><span><i class="codex"></i>Codex</span></span>
+      </div>
+      <svg class="tb-spark" id="tbSpark" viewBox="0 0 360 104" aria-hidden="true" hidden></svg>
       <div class="tb-foot" id="tbFoot">Claude Code、Codex、Hermes 里的真实用量 · 日均 token 消耗 1 亿–5 亿 · 点开看明细 →</div>
     </a>
 
@@ -797,12 +813,21 @@
     })).then(function(list){
       var parts = list.filter(Boolean);
       if (!parts.length) return; // leave the "数据接入中" fallback in place
-      var daily = {}, updated = 0;
+      var daily = {}, byDayTool = {}, updated = 0;
+      function toolKey(t){
+        t = String(t || '').toLowerCase();
+        if (t === 'claude-code') return 'cc';
+        if (t === 'codex') return 'codex';
+        if (t === 'hermes') return 'hermes';
+        return 'other';
+      }
       parts.forEach(function(p){
         if (p.updated) updated = Math.max(updated, +p.updated);
         (p.rows || []).forEach(function(r){
           var t = (+r.input || 0) + (+r.output || 0) + (+r.cache_read || 0) + (+r.cache_write || 0);
           daily[r.date] = (daily[r.date] || 0) + t;
+          var bt = byDayTool[r.date] || (byDayTool[r.date] = { cc: 0, hermes: 0, codex: 0, other: 0 });
+          bt[toolKey(r.tool)] += t;
         });
       });
       var days = Object.keys(daily).sort();
@@ -821,17 +846,53 @@
       var live = document.getElementById('tbLive');
       live.textContent = updated ? ('更新于 ' + ago(updated)) : '实时';
       live.classList.add('on');
-      var win = days.slice(-30).map(function(k){ return daily[k]; });
-      var W = 240, H = 36, max = Math.max.apply(null, win);
-      var d = win.map(function(v, i){
-        var x = win.length > 1 ? (i / (win.length - 1)) * W : 0;
-        var y = H - (max > 0 ? v / max : 0.5) * (H - 4) - 2;
-        return (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
-      }).join(' ');
-      document.getElementById('tbSparkPath').setAttribute('d', d);
-      document.getElementById('tbSpark').hidden = false;
+      // 近 90 天 · 按工具堆叠柱状
+      var winDays = days.slice(-90);
+      var W = 360, H = 104, ml = 30, mb = 12, mt = 4;
+      var iw = W - ml, ih = H - mb - mt;
+      var maxDay = 0;
+      winDays.forEach(function(k){ if (daily[k] > maxDay) maxDay = daily[k]; });
+      var niceMax = (function(v){
+        if (v <= 0) return 1e8;
+        var e = Math.pow(10, Math.floor(Math.log10(v))), f = v / e;
+        return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e;
+      })(maxDay);
+      var SVGNS = 'http://www.w3.org/2000/svg';
+      var svg = document.getElementById('tbSpark');
+      svg.innerHTML = '';
+      function el(tag, attrs, cls){
+        var e = document.createElementNS(SVGNS, tag);
+        for (var a in attrs) e.setAttribute(a, attrs[a]);
+        if (cls) e.setAttribute('class', cls);
+        svg.appendChild(e); return e;
+      }
+      [0, 0.5, 1].forEach(function(fr){
+        var y = mt + ih - ih * fr;
+        el('line', { x1: ml, y1: y, x2: W, y2: y }, 'tb-grid');
+        var t = el('text', { x: ml - 5, y: y + 3, 'text-anchor': 'end' });
+        t.textContent = fmtYi(niceMax * fr);
+      });
+      var n = winDays.length, slot = iw / n, bw = Math.max(1.2, slot - 1);
+      var order = ['cc', 'hermes', 'codex', 'other'];
+      winDays.forEach(function(k, i){
+        var bt = byDayTool[k] || {}, acc = 0, x = ml + i * slot;
+        order.forEach(function(tk){
+          var v = bt[tk] || 0; if (!v) return;
+          var h = (v / niceMax) * ih;
+          el('rect', { x: x.toFixed(1), y: (mt + ih - acc - h).toFixed(1), width: bw.toFixed(1), height: Math.max(0.6, h).toFixed(1) }, tk);
+          acc += h;
+        });
+      });
+      // x 轴首尾日期
+      [0, n - 1].forEach(function(i){
+        if (i < 0) return;
+        var t = el('text', { x: (ml + i * slot + bw / 2).toFixed(1), y: H - 2, 'text-anchor': i ? 'end' : 'start' });
+        t.textContent = winDays[i].slice(5);
+      });
+      svg.hidden = false;
+      var cap = document.getElementById('tbChartCap'); if (cap) cap.hidden = false;
       document.getElementById('tbFoot').textContent =
-        'Claude Code、Codex、Hermes 里的真实用量 · 本机 opentoken 汇总 · 近 ' + win.length + ' 天 · 点开看明细 →';
+        'Claude Code、Codex、Hermes 里的真实用量 · 本机 opentoken 汇总 · 点开看明细 →';
     });
   })();
 
@@ -1186,7 +1247,8 @@
       body.querySelectorAll('.pet img').forEach(function(n){ n.removeAttribute('src'); });
       body.querySelectorAll('.pet').forEach(function(n){ n.classList.remove('on', 'show-bubble'); n.removeAttribute('style'); });
       var tl = body.querySelector('#tbLive'); if (tl) { tl.className = 'tb-live'; tl.textContent = '数据接入中'; }
-      var sp = body.querySelector('#tbSpark'); if (sp) sp.setAttribute('hidden', '');
+      var sp = body.querySelector('#tbSpark'); if (sp) { sp.innerHTML = ''; sp.setAttribute('hidden', ''); }
+      var cc = body.querySelector('#tbChartCap'); if (cc) cc.setAttribute('hidden', '');
       [['tbToday', '1–5 亿'], ['tbTodayCap', '日均'], ['tbMonth', '—'], ['tbTotal', '—']].forEach(function(kv){
         var el = body.querySelector('#' + kv[0]); if (el) el.textContent = kv[1];
       });
